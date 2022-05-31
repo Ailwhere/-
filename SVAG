@@ -1,0 +1,70 @@
+import time
+import copy
+import torch
+import torchvision
+import random
+from numpy import *
+from pandas import *
+import matplotlib.pyplot as plt
+
+#在python 3.10.4 64-bit环境下
+
+#SVRG算法的核心代码，迭代更新部分
+def SVRG():
+    #Svrg: m := 1,stepSize = 1.5
+    while epoch_cnt < self.epoch_num:
+        u = self.get_gradient(w, self.train_x, self.train_y, self.alpha)
+        epoch_cnt = epoch_cnt + 1
+        wt = w
+        for _ in range(m):
+            t = t + 1
+            idx = np.random.randint(n)
+            data_x = self.train_x[:, idx]
+            data_y = np.mat(self.train_y[:, idx])
+            delta = self.get_gradient(wt, data_x, data_y, self.alpha) \
+                  - self.get_gradient(w, data_x, data_y, self.alpha)
+            delta = delta + u
+            wt = wt - self.step_size * delta
+            if t % n == 0:
+                epoch_cnt = epoch_cnt + 1
+                # record the loss and epoch_cnt and time
+        w = wt
+        
+#获取实验结果, 并预处理处理
+#最终显示log10(loss-bestLoss)与epoch和时间的对应关系
+def Result():
+    sag_time = read_csv("./sagWithBestTime.csv", header=None).T#文件格式仅供参考
+    sdca_time = read_csv("./sdcaWithBestTime.csv", header=None).T#
+    svrg_time = read_csv("./svrgWithBestTime.csv", header=None).T#
+    bestLoss = min(svrg_time[:][2].min(), sdca_time[:][2].min())
+    bestLoss = min(sag_time[:][2].min(), bestLoss)
+    bestLoss = bestLoss - 5e-16
+    sag_time[:][2] = np.log10(sag_time[:][2] - bestLoss)
+    svrg_time[:][2] = np.log10(svrg_time[:][2] - bestLoss)
+    sdca_time[:][2] = np.log10(sdca_time[:][2] - bestLoss)      
+    
+    
+#画log(loss-bestLoss)和epoch&time的关系图
+def make_image():
+    fig = plt.figure(figsize=(12,4))
+    # plt.title('loss with epoch')
+    ax = fig.add_subplot(1, 2, 1)
+    ax.set_title("loss with epoch")
+    ax.set_xlabel("#epoch")
+    ax.plot(sag_time[:][0], sag_time[:][2], 'b-', label="sag")
+    ax.plot(sdca_time[:][0], sdca_time[:][2],  'c-', label="sdca")
+    ax.plot(svrg_time[:][0], svrg_time[:][2],  'g-', label="svrg")
+
+    ax = fig.add_subplot(1, 2, 2)
+    ax.set_title("loss with time")
+    ax.set_xlabel("#time (s)")
+    ax.plot(sag_time[:][1], sag_time[:][2], 'b-', label="sag")
+    ax.plot(sdca_time[:][1], sdca_time[:][2],  'c-', label="sdca")
+    ax.plot(svrg_time[:][1], svrg_time[:][2],  'g-', label="svrg")
+    plt.legend(loc='upper right')
+    plt.savefig("./result.png")
+    plt.show()
+    
+#svrg.py#SVRG算法的具体实现
+#main.py#运行算法, 并选取相对最好的参数
+#由于未知原论文数据集挑选情况，未作具体实现，只复现了SVRG的核心迭代过程,理论上有满足条件的数据集再合理分配训练集和检查集后再完善main函数即可得到优美又明显的对比曲线
